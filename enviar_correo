@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# --- COLORES ---
+VERDE='\033[0;32m'
+AZUL='\033[0;34m'
+NC='\033[0m'
+
+echo -e "${AZUL}==============================================${NC}"
+echo -e "       ENVÍO DE CORREO CON MAILX              "
+echo -e "${AZUL}==============================================${NC}"
+
+# 1. PEDIR EL CORREO DESTINO
+read -p "📧 Introduce el correo del destinatario: " CORREO_DESTINO
+
+# 2. PEDIR EL ASUNTO
+read -p "📝 Asunto: " ASUNTO_MAIL
+
+# 3. ESCRIBIR EL CUERPO
+echo "✍️ Escribe el mensaje (Pulsa Enter y luego Ctrl+D para enviar):"
+CUERPO_MENSAJE=$(cat)
+
+# 4. EJECUTAR EL ENVÍO
+# Usamos el pipe (|) para pasar el texto al comando mail
+echo "$CUERPO_MENSAJE" | mail -s "$ASUNTO_MAIL" "$CORREO_DESTINO"
+
+# 5. COMPROBAR SI SE HA ENVIADO A LA COLA DE SALIDA
+if [ $? -eq 0 ]; then
+    echo -e "\n${VERDE}✅ El mensaje se ha entregado al sistema de correo.${NC}"
+    echo "Nota: Si es un correo externo (Gmail), puede que tarde o sea bloqueado."
+else
+    echo -e "\n${ROJO}❌ Error al intentar enviar con mailx.${NC}"
+fi
+
+echo -e "${AZUL}==============================================${NC}"
