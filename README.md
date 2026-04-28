@@ -48,7 +48,7 @@ Ruta: `C:\Windows\System32\drivers\etc\hosts`
 > **Comenta la línea que te salga antes de modificarlo.**
 
     # ===== PROYECTO SISTEMAS 1DAM =====
-    172.30.2.187    cuatrovientos.grupo3.com
+    [@IP del servidor]    cuatrovientos.grupo3.com
 
 ---
 
