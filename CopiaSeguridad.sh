@@ -17,6 +17,10 @@ CONFIG_DIR="$HOME/.CopiaSeguridad"
 DB_FILE="$CONFIG_DIR/backups.db"
 LOG_FILE="$CONFIG_DIR/backup.log"
 
+# --- AÑADIDO: REQUISITO CARPETA LOGS ---
+LOGS_DIR="$HOME/Script/logs"
+mkdir -p "$LOGS_DIR"
+
 # Crear directorios
 mkdir -p "$BACKUP_DIR" "$CONFIG_DIR"
 
@@ -87,9 +91,15 @@ create_backup_gui() {
         for source in "${SOURCES[@]}"; do
             if [[ -d "$source" || -f "$source" ]]; then
                 echo "# Respaldando $source... ($count/$total)" && echo $((40 + (count * 40 / total)))
+                
+                # --- MODIFICADO: REDIRECCIÓN DE ERROR Y CONTROL $? ---
                 sudo tar -czf "$backup_path/$(basename "$source").tar.gz" \
-                    -C "$(dirname "$source")" "$(basename "$source")" >/dev/null 2>&1 || \
-                echo "# Error en $source" && echo $((40 + (count * 40 / total)))
+                    -C "$(dirname "$source")" "$(basename "$source")" >/dev/null 2> "$LOGS_DIR/error_backup_tar.log"
+                
+                if [ $? -ne 0 ]; then
+                   echo "# Error en $source (Ver logs)"
+                   log "ERROR: Fallo al respaldar $source. Revisar $LOGS_DIR/error_backup_tar.log"
+                fi
             fi
             ((count++))
         done
@@ -100,7 +110,8 @@ create_backup_gui() {
         echo "kernel: $(uname -a)" >> "$backup_path/info.txt"
         
         echo "# Registrando en base de datos..." && echo "95"
-        echo "$backup_name|$timestamp|$(du -sh "$backup_path" | cut -f1)|CREATED" >> "$DB_FILE"
+        # Redirigimos error de escritura a log
+        echo "$backup_name|$timestamp|$(du -sh "$backup_path" | cut -f1)|CREATED" >> "$DB_FILE" 2> "$LOGS_DIR/error_db_backup.log"
         
         echo "100"
     ) | zenity --progress \
@@ -157,7 +168,7 @@ restore_backup_gui() {
             echo "10"
             
             local backup_path="$BACKUP_DIR/$backup_name"
-            local files=($(ls "$backup_path"/*.tar.gz 2>/dev/null))
+            local files=($(ls "$backup_path"/*.tar.gz 2> "$LOGS_DIR/error_ls_restore.log"))
             local total=${#files[@]}
             local count=1
             
@@ -165,7 +176,14 @@ restore_backup_gui() {
                 local dest_dir=$(dirname "$(echo "$file" | sed 's|.tar.gz||' | sed "s|$backup_path/||")")
                 echo "# Restaurando $(basename "$file")... ($count/$total)" 
                 echo $((10 + (count * 85 / total)))
-                sudo tar -xzf "$file" -C "$dest_dir" >/dev/null 2>&1
+                
+                # --- MODIFICADO: REDIRECCIÓN DE ERROR Y CONTROL $? ---
+                sudo tar -xzf "$file" -C "$dest_dir" >/dev/null 2> "$LOGS_DIR/error_restore_tar.log"
+                
+                if [ $? -ne 0 ]; then
+                    log "ERROR: Fallo al restaurar $file. Revisar $LOGS_DIR/error_restore_tar.log"
+                fi
+                
                 ((count++))
             done
             
@@ -198,12 +216,17 @@ delete_backup_gui() {
         --text="Eliminar permanentemente?\n\n$backup_name" \
         --width=400; then
         
-        sudo rm -rf "$BACKUP_DIR/$backup_name"
-        sed -i "${id}d" "$DB_FILE"
+        sudo rm -rf "$BACKUP_DIR/$backup_name" 2> "$LOGS_DIR/error_delete_files.log"
+        sed -i "${id}d" "$DB_FILE" 2> "$LOGS_DIR/error_delete_db.log"
         
-        zenity --info --title="CopiaSeguridad - Eliminado" \
-            --text="Backup '$backup_name' eliminado"
-        log "CopiaSeguridad: Backup eliminado: $backup_name (ID: $id)"
+        # --- AÑADIDO: CONTROL $? EN ELIMINACIÓN ---
+        if [ $? -eq 0 ]; then
+            zenity --info --title="CopiaSeguridad - Eliminado" \
+                --text="Backup '$backup_name' eliminado"
+            log "CopiaSeguridad: Backup eliminado: $backup_name (ID: $id)"
+        else
+            zenity --error --text="Error al eliminar el registro. Revisar $LOGS_DIR/error_delete_db.log"
+        fi
     fi
 }
 
@@ -218,8 +241,8 @@ info_backup_gui() {
     local backup_name=$(echo "$line" | cut -d'|' -f1)
     local backup_path="$BACKUP_DIR/$backup_name"
     
-    local info=$(cat "$backup_path/info.txt" 2>/dev/null || echo "No disponible")
-    local files=$(ls -lh "$backup_path"/*.tar.gz 2>/dev/null | head -10 || echo "No hay archivos")
+    local info=$(cat "$backup_path/info.txt" 2> "$LOGS_DIR/error_info_cat.log" || echo "No disponible")
+    local files=$(ls -lh "$backup_path"/*.tar.gz 2> "$LOGS_DIR/error_info_ls.log" | head -10 || echo "No hay archivos")
     
     zenity --info --title="CopiaSeguridad - Info: $backup_name" \
         --text="Sistema:\n$info\n\nArchivos (primeros 10):\n$files" \
@@ -229,6 +252,7 @@ info_backup_gui() {
 
 # Mostrar logs
 show_logs_gui() {
+    # Mostramos tanto tus logs de actividad como los de error del sistema
     local logs=$(tail -50 "$LOG_FILE" 2>/dev/null || echo "No hay logs")
     zenity --text-info --title="CopiaSeguridad - Logs Recientes" \
         --filename=- \
