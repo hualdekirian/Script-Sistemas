@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de Administración - Grupo 3</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f4f4f4; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .btn { padding: 10px 15px; margin: 5px; cursor: pointer; border: none; border-radius: 4px; background: #007bff; color: white; }
+        .btn:hover { background: #0056b3; }
+        #resultado { margin-top: 20px; padding: 15px; border: 1px solid #ddd; background: #fafafa; min-height: 50px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Gestión de Sistemas - Cuatrovientos.grupo3.com</h1>
+        <p>Seleccione una operación administrativa:</p>
+
+        <button class="btn" onclick="ejecutar('verificar.sh')">Comprobar Conectividad MV</button>
+        <button class="btn" onclick="ejecutar('estado_red.sh')">Estado de Red</button>
+        <button class="btn" onclick="ejecutar('backups.sh')">Copias de Seguridad</button>
+        <button class="btn" onclick="ejecutar('ver_ssh.sh')">Ver Log SSH (Telegram)</button>
+        <button class="btn" onclick="ejecutar('usuarios.sh')">Gestión de Usuarios</button>
+
+        <div id="resultado">Los resultados aparecerán aquí...</div>
+    </div>
+
+    <script>
+        function ejecutar(script) {
+            const resDiv = document.getElementById('resultado');
+            resDiv.innerHTML = "Ejecutando operación...";
+            // Llamada al script en la carpeta cgi-bin
+            fetch(`/cgi-bin/${script}`)
+                .then(response => response.text())
+                .then(data => resDiv.innerHTML = data)
+                .catch(error => resDiv.innerHTML = "Error: " + error);
+        }
+    </script>
+</body>
+</html>
