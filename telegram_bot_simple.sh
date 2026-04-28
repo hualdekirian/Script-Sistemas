@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# --- CABECERA CGI ---
+echo "Content-type: text/html"
+echo ""
+
 # --- CONFIGURACIÓN ---
 BOT_TOKEN="AAFatjvTdNPsICXZgc2PIqhzOqD-l0l139I"
 ADMIN_CHAT_ID="8460592342"

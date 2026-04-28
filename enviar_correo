@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# --- CABECERA CGI ---
+echo "Content-type: text/html"
+echo ""
+
 LOGS="$HOME/Script/logs"
 
 read -p "Introduce el correo del destinatario: " DESTINO

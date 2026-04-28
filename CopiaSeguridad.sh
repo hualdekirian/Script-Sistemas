@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# --- CABECERA CGI ---
+echo "Content-type: text/html"
+echo ""
+
 # ======================================================================
 # CopiaSeguridad - Gestor de Copias de Seguridad con GUI Zenity
 # Ubuntu Linux - Version GUI
