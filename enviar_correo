@@ -1,19 +1,21 @@
 #!/bin/bash
+LOGS="$HOME/Script/logs"
 
-# Preguntar datos al usuario
 read -p "Introduce el correo del destinatario: " DESTINO
 read -p "Introduce el asunto del mensaje: " ASUNTO
 echo "Introduce el cuerpo del mensaje (pulsa Ctrl+D cuando termines):"
 CUERPO=$(cat)
 
-# Crear el formato del mensaje para ssmtp
 echo -e "To: $DESTINO\nSubject: $ASUNTO\n\n$CUERPO" > mail_temp.txt
 
-# Enviar el correo
 echo "Enviando correo..."
-sudo ssmtp "$DESTINO" < mail_temp.txt
+# Redirección de salida y error a la carpeta de logs
+sudo ssmtp "$DESTINO" < mail_temp.txt > "$LOGS/enviar_correo.log" 2> "$LOGS/error_correo.log"
 
-# Limpiar archivo temporal
+if [ $? -eq 0 ]; then
+    echo "¡Proceso finalizado!"
+else
+    echo "Error al enviar. Revisa $LOGS/error_correo.log"
+fi
+
 rm mail_temp.txt
-
-echo "¡Proceso finalizado!"

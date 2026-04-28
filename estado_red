@@ -2,8 +2,9 @@
 
 # --- CONFIGURACIÓN ---
 INTERFAZ="ens33" 
+LOGS="$HOME/Script/logs"  # Ruta según tu imagen de terminal
 
-# Colores
+# Colores (Tu código original)
 VERDE='\033[0;32m'
 ROJO='\033[0;31m'
 AZUL='\033[0;34m'
@@ -25,7 +26,8 @@ echo -e "🚪 ${AMARILLO}Puerta de Enlace:${NC} $GATEWAY"
 
 # 2. PUERTOS EN ESCUCHA
 echo -e "\n--- 🔌 PUERTOS ABIERTOS (LISTEN) ---"
-PUERTOS=$(ss -tuln | grep LISTEN | awk '{print $5}' | cut -d':' -f2 | sort -nu | xargs)
+# Redirigimos posibles errores de ss al log
+PUERTOS=$(ss -tuln | grep LISTEN | awk '{print $5}' | cut -d':' -f2 | sort -nu | xargs 2> "$LOGS/error_puertos.log")
 
 if [ -z "$PUERTOS" ]; then
     echo -e "${ROJO}No hay puertos abiertos detectados.${NC}"
@@ -36,20 +38,22 @@ fi
 # 3. CONEXIÓN EXTERNA (IP PÚBLICA)
 echo -e "\n--- 🌍 CONEXIÓN EXTERNA ---"
 echo -n "Consultando IP Pública... "
-IP_PUBLICA=$(curl -s --connect-timeout 5 https://ifconfig.me)
+# Redirigimos error de curl a la carpeta de logs
+IP_PUBLICA=$(curl -s --connect-timeout 5 https://ifconfig.me 2> "$LOGS/error_ip_publica.log")
 
 if [ -z "$IP_PUBLICA" ]; then
-    echo -e "${ROJO}No se pudo obtener (¿Hay internet?)${NC}"
+    echo -e "${ROJO}No se pudo obtener (Ver $LOGS/error_ip_publica.log)${NC}"
 else
     echo -e "${VERDE}$IP_PUBLICA${NC}"
 fi
 
 # 4. PRUEBA DE SALIDA (GOOGLE)
 echo -n "📡 Probando conexión con Google (8.8.8.8)... "
-if ping -c 1 -W 2 8.8.8.8 > /dev/null 2>&1; then
+# Redirigimos salida de error a log y usamos $? implícito en el if
+if ping -c 1 -W 2 8.8.8.8 > /dev/null 2> "$LOGS/error_ping.log"; then
     echo -e "${VERDE}[CONECTADO]${NC}"
 else
-    echo -e "${ROJO}[SIN ACCESO A INTERNET]${NC}"
+    echo -e "${ROJO}[SIN ACCESO A INTERNET] (Ver $LOGS/error_ping.log)${NC}"
 fi
 
 echo -e "${AZUL}==============================================${NC}"

@@ -1,9 +1,15 @@
 #!/bin/bash
 
 # --- CONFIGURACIÓN ---
+# Variables necesarias para el envío (no se comparten con otros scripts)
 TOKEN="8778430635:AAFatjvTdNPsICXZgc2PIqhzOqD-l0l139I"
 ID_CHAT="8460592342"
-LOG="/var/log/auth.log"
+
+# Variable de origen (el archivo que lee el script)
+ARCHIVO_AUTH="/var/log/auth.log"
+
+# Variable de destino (donde guardas tus logs de control)
+LOGS_DIR="$HOME/Script/logs"
 
 # --- FUNCIÓN PARA IDENTIFICAR PERSONAS ---
 identificar_persona() {
@@ -18,7 +24,8 @@ identificar_persona() {
 }
 
 # --- PROCESAR LOGS ---
-DATA=$(sudo grep -E "Accepted|Failed" "$LOG" | tail -n 8 | while read -r line; do
+# Redirigimos errores de lectura de auth.log a tu carpeta de logs
+DATA=$(sudo grep -E "Accepted|Failed" "$ARCHIVO_AUTH" 2> "$LOGS_DIR/error_lectura_ssh.log" | tail -n 8 | while read -r line; do
     HORA=$(echo $line | awk '{print $3}')
     IP=$(echo $line | awk '{print $11}')
     USER=$(echo $line | awk '{print $9}')
@@ -40,7 +47,9 @@ DATA=$(sudo grep -E "Accepted|Failed" "$LOG" | tail -n 8 | while read -r line; d
     fi
 done)
 
-if [ -z "$DATA" ]; then DATA="Sin actividad reciente."; fi
+if [ -z "$DATA" ]; then
+    DATA="Sin actividad reciente."
+fi
 
 # --- MENSAJE FINAL ---
 CUERPO="🛡 *REPORTE SSH PERSONALIZADO*%0A"
@@ -48,9 +57,15 @@ CUERPO+="━━━━━━━━━━━━━━━━━━%0A%0A"
 CUERPO+="${DATA//$'\n'/%0A}"
 
 # --- ENVÍO ---
+# Redirección de salida (> log) y error (2> log) a tu carpeta
 curl -s -X POST "https://api.telegram.org/bot$TOKEN/sendMessage" \
     -d "chat_id=$ID_CHAT" \
     -d "text=$CUERPO" \
-    -d "parse_mode=Markdown" > /dev/null
+    -d "parse_mode=Markdown" > "$LOGS_DIR/ver_ssh_envio.log" 2> "$LOGS_DIR/error_telegram_ssh.log"
 
-echo "✅ Reporte enviado. ¡Ahora con identificación de nombres!"
+# Control de ejecución con la variable $?
+if [ $? -eq 0 ]; then
+    echo "✅ Reporte enviado. ¡Ahora con identificación de nombres!"
+else
+    echo "❌ Error al enviar reporte. Consulta $LOGS_DIR/error_telegram_ssh.log"
+fi
