@@ -128,25 +128,31 @@ create_backup_gui() {
     log "CopiaSeguridad: Backup creado: $backup_name"
 }
 
-# Listar backups
+# Listar backups (VERSIÓN DEFINITIVA ANTI-ERRORES)
 list_backups_gui() {
-    if [[ ! -f "$DB_FILE" ]]; then
-        zenity --info --title="CopiaSeguridad" --text="No hay copias de seguridad"
+    if [[ ! -f "$DB_FILE" || ! -s "$DB_FILE" ]]; then
+        zenity --info --title="CopiaSeguridad" --text="No hay registros en la base de datos."
         return 0
     fi
 
-    local backups=$(awk -F'|' '{
-        printf "%s|%s|%s|%s\n", NR, $2, $1, $3
+    # 1. Leemos el archivo y lo transformamos en una lista simple de elementos
+    # Zenity necesita: Valor1 Valor2 Valor3 Valor4 (uno tras otro)
+    local lista_elementos=$(awk -F'|' '{
+        # Imprimimos: ID, Fecha, Nombre, Tamaño (en ese orden para las columnas)
+        printf "%s\n%s\n%s\n%s\n", NR, $2, $1, $3
     }' "$DB_FILE")
 
-    zenity --list \
+    # 2. Pasamos la lista a Zenity
+    # Importante: No usamos la variable entre comillas dentro del comando para que 
+    # cada línea de la variable se cuente como un argumento distinto.
+    local selected=$(echo "$lista_elementos" | zenity --list \
         --title="CopiaSeguridad - Backups Disponibles" \
-        --text="Selecciona un backup (o Cancelar)" \
-        --column="ID" --column="Fecha" --column="Nombre" --column="Tamano" \
-        $backups \
-        --width=650 \
-        --height=450 \
-        --separator="|"
+        --text="Selecciona una copia de la lista:" \
+        --column="ID" --column="Fecha" --column="Nombre" --column="Tamaño" \
+        --width=700 --height=400)
+
+    # Devolvemos lo seleccionado para que otras funciones (restaurar/eliminar) funcionen
+    echo "$selected"
 }
 
 # Restaurar backup
