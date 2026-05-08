@@ -41,6 +41,11 @@ De forma gráfica en Ajustes, o modificando `/etc/netplan/0….yaml`:
           nameservers:
             addresses: [IP_DEL_SERVIDOR]
 
+### 2. Cambiar el archivo --> sudo nano /etc/hosts
+
+Poner: 
+    172.30.2.187    cuatrovientos.grupo3.com
+
 ### 2. Cambiar el DNS en Windows — fichero hosts
 
 Ruta: `C:\Windows\System32\drivers\etc\hosts`
