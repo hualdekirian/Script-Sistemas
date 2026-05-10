@@ -1,55 +1,60 @@
 #!/bin/bash
 
+# --- CABECERA OBLIGATORIA PARA CGI ---
+echo "Content-type: text/html"
+echo ""
+
 # --- CONFIGURACIÓN ---
 INTERFAZ="ens33" 
 
-# Colores
-VERDE='\033[0;32m'
-ROJO='\033[0;31m'
-AZUL='\033[0;34m'
-AMARILLO='\033[1;33m'
-NC='\033[0m'
+# Estilos básicos para que se vea bien en el panel
+echo "<div style='font-family: monospace; line-height: 1.4;'>"
+echo "<h3>==============================================</h3>"
+echo "<h3>        INFORME DE ESTADO DE RED              </h3>"
+echo "<h3>==============================================</h3>"
 
-echo -e "${AZUL}==============================================${NC}"
-echo -e "${AZUL}       INFORME DE ESTADO DE RED               ${NC}"
-echo -e "${AZUL}==============================================${NC}"
+# 1. IDENTIFICACIÓN LOCAL
+# Intentamos detectar la interfaz si ens33 no existe (por seguridad)
+if [ ! -d "/sys/class/net/$INTERFAZ" ]; then
+    INTERFAZ=$(ip route | grep default | awk '{print $5}' | head -n 1)
+fi
 
-# 1. IDENTIFICACIÓN LOCAL (Punto 1 y 4)
 IP_PRIVADA=$(hostname -I | awk '{print $1}')
-MAC_ADDR=$(cat /sys/class/net/$INTERFAZ/address)
+MAC_ADDR=$(cat /sys/class/net/$INTERFAZ/address 2>/dev/null || echo "No detectada")
 GATEWAY=$(ip route | grep default | awk '{print $3}')
 
-echo -e "📍 ${AMARILLO}IP Privada:${NC} $IP_PRIVADA"
-echo -e "🆔 ${AMARILLO}MAC Address:${NC} $MAC_ADDR"
-echo -e "🚪 ${AMARILLO}Puerta de Enlace:${NC} $GATEWAY"
+echo "📍 <strong>IP Privada:</strong> $IP_PRIVADA<br>"
+echo "🆔 <strong>MAC Address:</strong> $MAC_ADDR<br>"
+echo "🚪 <strong>Puerta de Enlace:</strong> $GATEWAY<br>"
 
 # 2. PUERTOS EN ESCUCHA
-echo -e "\n--- 🔌 PUERTOS ABIERTOS (LISTEN) ---"
-PUERTOS=$(ss -tuln | grep LISTEN | awk '{print $5}' | cut -d':' -f2 | sort -nu | xargs)
+echo "<br>--- 🔌 <strong>PUERTOS ABIERTOS (LISTEN)</strong> ---<br>"
+PUERTOS=$(ss -tuln | grep LISTEN | awk '{print $5}' | awk -F: '{print $NF}' | sort -nu | xargs)
 
 if [ -z "$PUERTOS" ]; then
-    echo -e "${ROJO}No hay puertos abiertos detectados.${NC}"
+    echo "<span style='color:red;'>No hay puertos abiertos detectados.</span><br>"
 else
-    echo -e "${VERDE}Puertos activos:${NC} $PUERTOS"
+    echo "<span style='color:green;'>Puertos activos:</span> $PUERTOS<br>"
 fi
 
 # 3. CONEXIÓN EXTERNA (IP PÚBLICA)
-echo -e "\n--- 🌍 CONEXIÓN EXTERNA ---"
-echo -n "Consultando IP Pública... "
-IP_PUBLICA=$(curl -s --connect-timeout 5 https://ifconfig.me)
+echo "<br>--- 🌍 <strong>CONEXIÓN EXTERNA</strong> ---<br>"
+echo "Consultando IP Pública... "
+IP_PUBLICA=$(curl -s --connect-timeout 3 https://ifconfig.me)
 
 if [ -z "$IP_PUBLICA" ]; then
-    echo -e "${ROJO}No se pudo obtener (¿Hay internet?)${NC}"
+    echo "<span style='color:red;'>No se pudo obtener (¿Hay internet?)</span><br>"
 else
-    echo -e "${VERDE}$IP_PUBLICA${NC}"
+    echo "<span style='color:green;'>$IP_PUBLICA</span><br>"
 fi
 
 # 4. PRUEBA DE SALIDA (GOOGLE)
-echo -n "📡 Probando conexión con Google (8.8.8.8)... "
+echo "<br>📡 <strong>Probando conexión con Google (8.8.8.8):</strong> "
 if ping -c 1 -W 2 8.8.8.8 > /dev/null 2>&1; then
-    echo -e "${VERDE}[CONECTADO]${NC}"
+    echo "<span style='color:green;'>[CONECTADO]</span><br>"
 else
-    echo -e "${ROJO}[SIN ACCESO A INTERNET]${NC}"
+    echo "<span style='color:red;'>[SIN ACCESO A INTERNET]</span><br>"
 fi
 
-echo -e "${AZUL}==============================================${NC}"
+echo "<h3>==============================================</h3>"
+echo "</div>"
