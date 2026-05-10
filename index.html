@@ -8,7 +8,19 @@
         .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
         .btn { padding: 10px 15px; margin: 5px; cursor: pointer; border: none; border-radius: 4px; background: #007bff; color: white; }
         .btn:hover { background: #0056b3; }
-        #resultado { margin-top: 20px; padding: 15px; border: 1px solid #ddd; background: #fafafa; min-height: 50px; }
+        #resultado { margin-top: 20px; padding: 15px; border: 1px solid #ddd; background: #fafafa; min-height: 50px; white-space: pre-wrap; }
+
+        /* Estilos para el formulario de correo */
+        #form-correo {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            display: none; /* Oculto por defecto */
+            background: #eee;
+        }
+        .campo { margin-bottom: 10px; }
+        .campo label { display: block; font-weight: bold; }
+        .campo input, .campo textarea { width: 100%; padding: 8px; box-sizing: border-box; }
     </style>
 </head>
 <body>
@@ -18,22 +30,86 @@
 
         <button class="btn" onclick="ejecutar('verificar.sh')">Comprobar Conectividad MV</button>
         <button class="btn" onclick="ejecutar('estado_red.sh')">Estado de Red</button>
-        <button class="btn" onclick="ejecutar('backups.sh')">Copias de Seguridad</button>
-        <button class="btn" onclick="ejecutar('ver_ssh.sh')">Ver Log SSH (Telegram)</button>
-        <button class="btn" onclick="ejecutar('usuarios.sh')">Gestión de Usuarios</button>
+        <!-- Al hacer clic, mostramos el formulario en lugar de ejecutar el script directamente -->
+        <button class="btn" onclick="mostrarFormulario()">Enviar correo</button>
+
+        <!-- Formulario oculto para el correo -->
+        <div id="form-correo">
+            <h3>Nuevo Mensaje de Correo</h3>
+            <div class="campo">
+                <label>Destinatario:</label>
+                <input type="email" id="destino" placeholder="ejemplo@correo.com">
+            </div>
+            <div class="campo">
+                <label>Asunto:</label>
+                <input type="text" id="asunto" placeholder="Asunto del mensaje">
+            </div>
+            <div class="campo">
+                <label>Mensaje:</label>
+                <textarea id="cuerpo" rows="4"></textarea>
+            </div>
+            <button class="btn" style="background: #28a745;" onclick="enviarDatosCorreo()">Enviar Ahora</button>
+            <button class="btn" style="background: #dc3545;" onclick="this.parentElement.style.display='none'">Cancelar</button>
+        </div>
 
         <div id="resultado">Los resultados aparecerán aquí...</div>
-    </div>
 
+        <hr>
+        <h3>Gestión de Usuarios</h3>
+        <div class="campo">
+        <label>Nombre de Usuario:</label>
+        <input type="text" id="nombre_usuario" placeholder="Ej: ana_admin">
+        </div>
+        <button class="btn" style="background: #28a745;" onclick="gestionarUsuario('crear')">👤 Crear Usuario</button>
+        <button class="btn" style="background: #dc3545;" onclick="gestionarUsuario('eliminar')">🗑️ Eliminar Usuario</button>
+        <button class="btn" style="background: #17a2b8;" onclick="ejecutar('usuarios.sh?accion=listar')">📋 Listar Usuarios</button>
+
+        <script>
+        function gestionarUsuario(accion) {
+                const nombre = document.getElementById('nombre_usuario').value;
+                if (!nombre && accion !== 'listar') {
+                    alert("Por favor, introduce un nombre de usuario");
+                    return;
+                }
+                ejecutar(`usuarios.sh?accion=${accion}&nombre=${encodeURIComponent(nombre)}`);
+        }
+        </script>
+
+        </div>
     <script>
+        const resDiv = document.getElementById('resultado');
+
         function ejecutar(script) {
-            const resDiv = document.getElementById('resultado');
             resDiv.innerHTML = "Ejecutando operación...";
-            // Llamada al script en la carpeta cgi-bin
             fetch(`/cgi-bin/${script}`)
                 .then(response => response.text())
                 .then(data => resDiv.innerHTML = data)
                 .catch(error => resDiv.innerHTML = "Error: " + error);
+        }
+
+        function mostrarFormulario() {
+            // Cerramos el área de resultados y mostramos el form
+            resDiv.innerHTML = "Rellene los datos del correo.";
+            document.getElementById('form-correo').style.display = 'block';
+        }
+
+        function enviarDatosCorreo() {
+            const destino = document.getElementById('destino').value;
+            const asunto = document.getElementById('asunto').value;
+            const cuerpo = document.getElementById('cuerpo').value;
+
+            resDiv.innerHTML = "Enviando correo...";
+            document.getElementById('form-correo').style.display = 'none';
+
+            // Enviamos los datos al script mediante POST
+            fetch('/cgi-bin/correo.sh', {
+                method: 'POST',
+                body: `destino=${encodeURIComponent(destino)}&asunto=${encodeURIComponent(asunto)}&cuerpo=${encodeURIComponent(cuerpo)}`,
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            })
+            .then(response => response.text())
+            .then(data => resDiv.innerHTML = data)
+            .catch(error => resDiv.innerHTML = "Error al enviar: " + error);
         }
     </script>
 </body>
