@@ -39,7 +39,7 @@ De forma gráfica en Ajustes, o modificando `/etc/netplan/0….yaml`:
         enp0s8:  # <--- Sustituye por el nombre que te dio 'ip a'
           dhcp4: true
           nameservers:
-            addresses: [IP_DEL_SERVIDOR]
+            addresses: IP_DEL_SERVIDOR
 
 ### 2. Cambiar el archivo --> sudo nano /etc/hosts
 
@@ -53,7 +53,7 @@ Ruta: `C:\Windows\System32\drivers\etc\hosts`
 > **Comenta la línea que te salga antes de modificarlo.**
 
     # ===== PROYECTO SISTEMAS 1DAM =====
-    [@IP del servidor]    cuatrovientos.grupo3.com
+    @IP del servidor    cuatrovientos.grupo3.com
 
 ---
 
@@ -70,4 +70,39 @@ Ejemplo de salida:
     ✅ 172.30.1.11 - Responde
     ❌ 172.30.1.12 - No responde
 
-### 2. ...
+### 2. Informe de Estado de Red
+
+Proporciona una visión detallada del estado de la red del sistema:
+
+| Dato | Descripción |
+|------|-------------|
+| 🖥️ IP privada | Dirección IP asignada en la red local |
+| 🔌 Dirección MAC | Identificador físico de la interfaz de red |
+| 🚪 Puerta de enlace | Gateway configurado para el tráfico saliente |
+| 📡 Puertos en escucha | Puertos en estado `LISTEN` activos |
+
+También verifica la **salida a internet** y consulta la **IP pública actual**.
+
+---
+
+### 3. Envío de Correo
+
+Interfaz integrada para redactar y enviar correos electrónicos con:
+
+- **Destinatario** personalizado
+- **Asunto** libre
+- **Cuerpo** del mensaje
+
+---
+
+### 4. Gestión de Usuarios
+
+Administración simplificada de cuentas de usuario en el sistema Linux.
+
+| Acción | Descripción |
+|--------|-------------|
+| ➕ **Crear usuario** | Genera nuevos usuarios con contraseñas seguras de 10 caracteres de forma automática |
+| ➖ **Eliminar usuario** | Borra la cuenta y su directorio personal (`/home/usuario`) de forma permanente |
+| 📋 **Listar usuarios** | Muestra todos los usuarios reales del sistema (`UID >= 1000`) |
+
+> **Atención:** La eliminación de usuarios es una operación **irreversible**.
