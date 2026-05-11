@@ -106,3 +106,28 @@ Administración simplificada de cuentas de usuario en el sistema Linux.
 | 📋 **Listar usuarios** | Muestra todos los usuarios reales del sistema (`UID >= 1000`) |
 
 > **Atención:** La eliminación de usuarios es una operación **irreversible**.
+
+---
+
+### 5. Copias de Seguridad (Backups)
+
+Sistema automatizado para salvaguardar la información crítica del entorno.
+
+- **Generar Backup:** Crea un archivo comprimido con los datos y configuraciones actuales.
+- **Restaurar Backup:** Permite cargar una copia de seguridad anterior para devolver el sistema a un estado estable.
+
+---
+
+### 6. Auditoría de Seguridad (Log SSH)
+
+Monitorización de los accesos remotos a la máquina virtual.
+
+- Lee y filtra los registros del sistema (`/var/log/auth.log` o similar).
+- Muestra un listado claro de las **direcciones IP** que se han conectado o han intentado conectarse por SSH al equipo.
+
+#### 6.1 Alertas de Telegram
+
+Integración con la API HTTP de Telegram mediante un Bot, vinculada a los eventos del sistema.
+
+- Permite enviar mensajes de alerta o notificaciones directamente al teléfono móvil a través de un chat de Telegram (ideal para notificar accesos SSH sospechosos o exitosos).
+- Utiliza tokens de autenticación para garantizar la seguridad del envío.
