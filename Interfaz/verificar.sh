@@ -9,7 +9,7 @@ echo ""
 LOG_ERRORES="/tmp/log_conectividad.err"
 VICTOR="172.30.3.230"
 KIRIAN="172.30.2.9"
-ANNE="172.30.2.187"
+ANNE="172.30.3.126"
 OSCAR="172.30.3.153"
 
 # --- REQUISITO: Uso de funciones (Fuente) ---
